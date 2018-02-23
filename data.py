@@ -79,10 +79,7 @@ class cifarData:
 
 		filenames = [os.path.join(filepath, 'data_batch_%d.bin' % i) for i in range(1,6)]
 		dataset = tf.data.FixedLengthRecordDataset(filenames,32 * 32 * 3 + 1)
-
-
 		dataset = dataset.map(self._dataset_parser)
-
 		global rand_seed
 		rand_seed = 5000
 		#250k samples for Shai
@@ -101,8 +98,8 @@ class cifarData:
 
 		testdata = testdata.map(lambda image, label: (tf.image.per_image_standardization(image), label))
 
-		iterator = dataset.batch(10000).make_one_shot_iterator()
-		test_data, test_labels = iterator.get_next()
+		testiterator = testdata.batch(10000).make_one_shot_iterator()
+		test_data, test_labels = testiterator.get_next()
 		with tf.Session() as session:
 			data, labels = session.run([data, labels])
 			test_data, test_labels = session.run([test_data, test_labels])
