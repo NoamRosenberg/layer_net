@@ -59,7 +59,7 @@ class Graph:
 				if i % 500 == 0:
 					print(epoch_loss)
 			print(epoch_loss)
-			nptest = sess.run(self.predictions, feed_dict={
+			nptest = self.sess.run(self.predictions, feed_dict={
 												self.test_images:test_data,
 												self.version: 9})
 			pred_test = np.argmax(nptest,axis=1)
