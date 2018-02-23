@@ -103,9 +103,13 @@ class Graph:
 		if self.FLAGS.model_type == 'regular':
 			self.train(layer=9, epochs=self.num_epochs)
 		else:
+			print('layer 0 training')			
 			self.train(layer=0, epochs=int(self.num_epochs/4)+1)
+			print('layer 1 training')
 			self.train(layer=1, epochs=int(self.num_epochs/4)+1)
+			print('layer 2 training')
 			self.train(layer=2, epochs=int(self.num_epochs/4)+1)
+			print('layer 3 training')
 			self.train(layer=3, epochs=int(self.num_epochs/4)+1)
 
 		self.sess.close()
