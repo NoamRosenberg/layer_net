@@ -4,102 +4,106 @@ import urllib
 import tarfile
 import tensorflow as tf
 
+class cifarData:
 
-# Function for progress bar
-def _progress(count, block_size, total_size):
-	sys.stdout.write('\r>> Downloading %s %.1f%%' % (
-		tarfilename, 100.0 * count * block_size / total_size))
-	sys.stdout.flush()
+	# Function for progress bar
+	def _progress(self, count, block_size, total_size):
+		sys.stdout.write('\r>> Downloading %s %.1f%%' % (
+			self.tarfilename, 100.0 * count * block_size / total_size))
+		sys.stdout.flush()
 
-# Function for parsing Cifar into a proper data set
-def dataset_parser(value):
+	# Function for parsing Cifar into a proper data set
+	def _dataset_parser(self, value):
 
-	# Every record consists of a label followed by the image, with a fixed number of bytes for each.
-	label_bytes = 1
-	image_bytes = 32 * 32 * 3
-	record_bytes = label_bytes + image_bytes
+		# Every record consists of a label followed by the image, with a fixed number of bytes for each.
+		label_bytes = 1
+		image_bytes = 32 * 32 * 3
+		record_bytes = label_bytes + image_bytes
 
-	# Convert from a string to a vector of uint8 that is record_bytes long.
-	raw_record = tf.decode_raw(value, tf.uint8)
+		# Convert from a string to a vector of uint8 that is record_bytes long.
+		raw_record = tf.decode_raw(value, tf.uint8)
 
-	# The first byte represents the label, which we convert from uint8 to int32.
-	label = tf.cast(raw_record[0], tf.int32)
+		# The first byte represents the label, which we convert from uint8 to int32.
+		label = tf.cast(raw_record[0], tf.int32)
 
-	# The remaining bytes after the label represent the image, which we reshape
-	# from [depth * height * width] to [depth, height, width].
-	depth_major = tf.reshape(raw_record[label_bytes:record_bytes],
-		                   [3, 32, 32])
+		# The remaining bytes after the label represent the image, which we reshape
+		# from [depth * height * width] to [depth, height, width].
+		depth_major = tf.reshape(raw_record[label_bytes:record_bytes],
+				               [3, 32, 32])
 
-	# Convert from [depth, height, width] to [height, width, depth], and cast as
-	# float32.
-	image = tf.cast(tf.transpose(depth_major, [1, 2, 0]), tf.float32)
+		# Convert from [depth, height, width] to [height, width, depth], and cast as
+		# float32.
+		image = tf.cast(tf.transpose(depth_major, [1, 2, 0]), tf.float32)
 
-	return image, tf.one_hot(label, 10)
+		return image, tf.one_hot(label, 10)
 
-#Function for augmenting images
-def train_preprocess_fn(image, label):
-	"""Preprocess a single training image of layout [height, width, depth]."""
+	#Function for augmenting images
+	def _train_preprocess_fn(self, image, label):
+		"""Preprocess a single training image of layout [height, width, depth]."""
 
-	global rand_seed
-	rand_seed = rand_seed + 1
-	print('Using seed: ' + str(rand_seed))
+		global rand_seed
+		rand_seed = rand_seed + 1
+		print('Using seed: ' + str(rand_seed))
 
-	# Resize the image to add four extra pixels on each side.
-	image = tf.image.resize_image_with_crop_or_pad(image, 40, 40)
+		# Resize the image to add four extra pixels on each side.
+		image = tf.image.resize_image_with_crop_or_pad(image, 40, 40)
 
-	# Randomly crop a [_HEIGHT, _WIDTH] section of the image.
-	image = tf.random_crop(image, [32, 32, 3], rand_seed)
+		# Randomly crop a [_HEIGHT, _WIDTH] section of the image.
+		image = tf.random_crop(image, [32, 32, 3], rand_seed)
 
-	# Randomly flip the image horizontally.
-	image = tf.image.random_flip_left_right(image, rand_seed)
+		# Randomly flip the image horizontally.
+		image = tf.image.random_flip_left_right(image, rand_seed)
 
-	return image, label
+		return image, label
 
-def load_data():
-	DATA_URL = 'https://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz'
+	def __init__(self):
 
-	# Download Cifar and extract if it doesn't exist allready
-	data_dir = '/tmp/cifar10_data'
-	filepath = os.path.join(data_dir,'cifar-10-batches-bin')
-	if not os.path.exists(filepath):
-		if not os.path.exists(data_dir):
-			os.makedirs(data_dir)
-		tarfilename = DATA_URL.split('/')[-1]
-		tarfilepath = os.path.join(data_dir, tarfilename)
+		self.DATA_URL = 'https://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz'
 
-		tarfilepath, _ = urllib.request.urlretrieve(DATA_URL, tarfilepath, _progress)
-		print()
-		statinfo = os.stat(tarfilepath)
-		print('Successfully downloaded', tarfilename, statinfo.st_size, 'bytes.')
-		tarfile.open(tarfilepath, 'r:gz').extractall(data_dir)
+	def load(self):
 
-	filenames = [os.path.join(filepath, 'data_batch_%d.bin' % i) for i in range(1,6)]
-	dataset = tf.data.FixedLengthRecordDataset(filenames,32 * 32 * 3 + 1)
+		# Download Cifar and extract if it doesn't exist allready
+		data_dir = '/tmp/cifar10_data'
+		filepath = os.path.join(data_dir,'cifar-10-batches-bin')
+		if not os.path.exists(filepath):
+			if not os.path.exists(data_dir):
+				os.makedirs(data_dir)
+			self.tarfilename = self.DATA_URL.split('/')[-1]
+			tarfilepath = os.path.join(data_dir, self.tarfilename)
+
+			tarfilepath, _ = urllib.request.urlretrieve(self.DATA_URL, tarfilepath, self._progress)
+			print()
+			statinfo = os.stat(tarfilepath)
+			print('Successfully downloaded', tarfilename, statinfo.st_size, 'bytes.')
+			tarfile.open(tarfilepath, 'r:gz').extractall(data_dir)
+
+		filenames = [os.path.join(filepath, 'data_batch_%d.bin' % i) for i in range(1,6)]
+		dataset = tf.data.FixedLengthRecordDataset(filenames,32 * 32 * 3 + 1)
 
 
-	dataset = dataset.map(dataset_parser)
+		dataset = dataset.map(self._dataset_parser)
 
-	global rand_seed
-	rand_seed = 5000
-	#250k samples for Shai
-	dataset = dataset.repeat(5)
+		global rand_seed
+		rand_seed = 5000
+		#250k samples for Shai
+		dataset = dataset.repeat(5)
 
-	dataset = dataset.map(train_preprocess_fn)
+		dataset = dataset.map(self._train_preprocess_fn)
 
-	dataset = dataset.map(lambda image, label: (tf.image.per_image_standardization(image), label))
+		dataset = dataset.map(lambda image, label: (tf.image.per_image_standardization(image), label))
 
-	iterator = dataset.batch(250000).make_one_shot_iterator()
-	data, labels = iterator.get_next()
-	sess = tf.InteractiveSession()
-	data, labels = sess.run([data, labels])
+		iterator = dataset.batch(250000).make_one_shot_iterator()
+		data, labels = iterator.get_next()
+		sess = tf.InteractiveSession()
+		data, labels = sess.run([data, labels])
 
-	testfilename = [os.path.join(filepath,'test_batch.bin')]
-	testdata = tf.data.FixedLengthRecordDataset(testfilename,32 * 32 * 3 + 1)
-	testdata = testdata.map(dataset_parser)
+		testfilename = [os.path.join(filepath,'test_batch.bin')]
+		testdata = tf.data.FixedLengthRecordDataset(testfilename,32 * 32 * 3 + 1)
+		testdata = testdata.map(self._dataset_parser)
 
-	testdata = testdata.map(lambda image, label: (tf.image.per_image_standardization(image), label))
+		testdata = testdata.map(lambda image, label: (tf.image.per_image_standardization(image), label))
 
-	iterator = dataset.batch(10000).make_one_shot_iterator()
-	test_data, test_labels = iterator.get_next()
-	test_data, test_labels = sess.run([test_data, test_labels])
-	return data, test_data, labels, test_labels
+		iterator = dataset.batch(10000).make_one_shot_iterator()
+		test_data, test_labels = iterator.get_next()
+		test_data, test_labels = sess.run([test_data, test_labels])
+		return data, test_data, labels, test_labels
