@@ -74,7 +74,7 @@ class cifarData:
 			tarfilepath, _ = urllib.request.urlretrieve(self.DATA_URL, tarfilepath, self._progress)
 			print()
 			statinfo = os.stat(tarfilepath)
-			print('Successfully downloaded', tarfilename, statinfo.st_size, 'bytes.')
+			print('Successfully downloaded', self.tarfilename, statinfo.st_size, 'bytes.')
 			tarfile.open(tarfilepath, 'r:gz').extractall(data_dir)
 
 		filenames = [os.path.join(filepath, 'data_batch_%d.bin' % i) for i in range(1,6)]
