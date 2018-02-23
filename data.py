@@ -103,7 +103,7 @@ class cifarData:
 
 		iterator = dataset.batch(10000).make_one_shot_iterator()
 		test_data, test_labels = iterator.get_next()
-		with tf.Session() as session
+		with tf.Session() as session:
 			data, labels = session.run([data, labels])
 			test_data, test_labels = session.run([test_data, test_labels])
 
