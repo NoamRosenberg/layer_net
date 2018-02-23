@@ -89,8 +89,8 @@ dataset = dataset.map(lambda image, label: (tf.image.per_image_standardization(i
 
 iterator = dataset.batch(250000).make_one_shot_iterator()
 data, labels = iterator.get_next()
-sess = tf.InteractiveSession()
-data, labels = sess.run([data, labels])
+#sess = tf.InteractiveSession()
+#data, labels = sess.run([data, labels])
 
 testfilename = [os.path.join(filepath,'test_batch.bin')]
 testdata = tf.data.FixedLengthRecordDataset(testfilename,32 * 32 * 3 + 1)

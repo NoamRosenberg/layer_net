@@ -2,12 +2,21 @@ import tensorflow as tf
 import numpy as np
 from ops import linear, conv2d
 from sklearn.metrics import accuracy_score
+import sys
+import argparse
+parser = argparse.ArgumentParser()
+
 
 batch_size = 128
 image_size = 32
 c_dim = 3
 classes=10
 
+parser.add_argument('--model_type', type=str, default='regular',
+help='regular or layer model')
+
+parser.add_argument('--epochs', type=int, default=20,
+help='apx sum epochs for training')
 
 def model(image, ver=3, reuse=False):
 	with tf.variable_scope("model") as scope:
@@ -39,67 +48,63 @@ def model(image, ver=3, reuse=False):
 
 		return h4_dense, layers
 
-def train(layer=9, epochs=2):
+def train(layer=9, epochs=2, session=sess):
 	
 	for epoch in range(epochs):
 		print("epoch: ", epoch + 1)
 		for i in range(int(data.shape[0] / batch_size)):
 			batch_data = data[i * batch_size:(i + 1) * batch_size]
 			batch_labels = labels[i * batch_size:(i + 1) * batch_size]
-			_, epoch_loss = sess.run([optim[layer], loss], feed_dict={
+			_, epoch_loss = session.run([optim[layer], loss], feed_dict={
 																images: batch_data,
 																tags: batch_labels,
 																version: layer})
-			if i % 100 == 0:
+			if i % 500 == 0:
 				print(epoch_loss)
 		print(epoch_loss)
+		nptest = session.run(predictions, feed_dict={
+											test_images:test_data,
+											version: 9})
+		pred_test = np.argmax(nptest,axis=1)
+		y_test = np.argmax(test_labels, axis=1)
+		print('accuracy score: ', accuracy_score(y_test,pred_test))	
 
+def main():
 
+	tags = tf.placeholder(tf.int32, [batch_size, classes],name='label')
+	images = tf.placeholder(tf.float32, [batch_size, image_size, image_size, c_dim], name='image')
+	version = tf.placeholder(tf.uint8,name='version')
+	test_images = tf.placeholder(tf.float32, [10000, image_size, image_size, c_dim], name='image')
 
+	nnlogits1, _ = model(images, version)
+	loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=tags, logits=nnlogits1, scope='cross_entropy'),name='reduce_batch')
 
-tags = tf.placeholder(tf.int32, [batch_size, classes],name='label')
-images = tf.placeholder(tf.float32, [batch_size, image_size, image_size, c_dim], name='image')
-version = tf.placeholder(tf.uint8,name='version')
-nnlogits1, _ = model(images, version)
+	t_vars = tf.trainable_variables()
+	h0_vars = [var for var in t_vars if 'h0' in var.name]
+	h1_vars= [var for var in t_vars if 'h1' in var.name]
+	h2_vars= [var for var in t_vars if 'h2' in var.name]
+	h3_vars= [var for var in t_vars if 'h3' in var.name]
 
-loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=tags, logits=nnlogits1, scope='cross_entropy'),name='reduce_batch')
+	optim0 = tf.train.GradientDescentOptimizer(0.01).minimize(loss, var_list=h0_vars)
+	optim1 = tf.train.GradientDescentOptimizer(0.01).minimize(loss, var_list=h1_vars)
+	optim2 = tf.train.GradientDescentOptimizer(0.01).minimize(loss, var_list=h2_vars)
+	optim3 = tf.train.GradientDescentOptimizer(0.01).minimize(loss, var_list=h3_vars)
+	regular_optim = tf.train.GradientDescentOptimizer(0.01).minimize(loss)
+	optim = {0: optim0, 1: optim1, 2: optim2, 3: optim3, 9: regular_optim}
 
-t_vars = tf.trainable_variables()
-h0_vars = [var for var in t_vars if 'h0' in var.name]
-h1_vars= [var for var in t_vars if 'h1' in var.name]
-h2_vars= [var for var in t_vars if 'h2' in var.name]
-h3_vars= [var for var in t_vars if 'h3' in var.name]
+	with tf.Session() as sess:
+		sess.run(tf.global_variables_initializer())
 
-optim0 = tf.train.GradientDescentOptimizer(0.01).minimize(loss, var_list=h0_vars)
-optim1 = tf.train.GradientDescentOptimizer(0.01).minimize(loss, var_list=h1_vars)
-optim2 = tf.train.GradientDescentOptimizer(0.01).minimize(loss, var_list=h2_vars)
-optim3 = tf.train.GradientDescentOptimizer(0.01).minimize(loss, var_list=h3_vars)
-regular_optim = tf.train.GradientDescentOptimizer(0.01).minimize(loss)
-optim = {0: optim0, 1: optim1, 2: optim2, 3: optim3, 9: regular_optim}
-sess = tf.InteractiveSession()
+		num_epochs = FLAGS.epochs
+		if FLAGS.model_type == 'regular':
+			train(layer=9, epochs=num_epochs)
+		else:
+		train(layer=0, epochs=int(num_epochs/4)+1)
+		train(layer=1, epochs=int(num_epochs/4)+1)
+		train(layer=2, epochs=int(num_epochs/4)+1)
+		train(layer=3, epochs=int(num_epochs/4)+1)
 
-#exp 1
-sess.run(tf.global_variables_initializer())
-train(layer=9, epochs=20)
-
-#exp 2
-sess.run(tf.global_variables_initializer())
-train(layer=0, epochs=5)
-train(layer=1, epochs=5)
-train(layer=2, epochs=5)
-train(layer=3, epochs=5)
-
-
-#nptest = sess.run(model(tf.convert_to_tensor(test_data), ver=3,reuse=True))
-test_images = tf.placeholder(tf.float32, [10000, image_size, image_size, c_dim], name='image')
-nn_logits, _ = model(test_images, version, reuse=True)
-predictions = tf.nn.softmax(nn_logits)
-
-nptest = sess.run(predictions, feed_dict={
-									test_images:test_data,
-									version: 9})
-pred_test = np.argmax(nptest,axis=1)
-y_test = np.argmax(test_labels, axis=1)
-print('accuracy score: ', accuracy_score(y_test,pred_test))
-
-
+if __name == '__main__':
+	FLAGS, unparsed = parser.parse_known_args()
+	tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+	
