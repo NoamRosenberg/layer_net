@@ -55,50 +55,51 @@ def train_preprocess_fn(image, label):
 
 	return image, label
 
+def load_data():
+	DATA_URL = 'https://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz'
 
-DATA_URL = 'https://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz'
+	# Download Cifar and extract if it doesn't exist allready
+	data_dir = '/tmp/cifar10_data'
+	filepath = os.path.join(data_dir,'cifar-10-batches-bin')
+	if not os.path.exists(filepath):
+		if not os.path.exists(data_dir):
+			os.makedirs(data_dir)
+		tarfilename = DATA_URL.split('/')[-1]
+		tarfilepath = os.path.join(data_dir, tarfilename)
 
-# Download Cifar and extract if it doesn't exist allready
-data_dir = '/tmp/cifar10_data'
-filepath = os.path.join(data_dir,'cifar-10-batches-bin')
-if not os.path.exists(filepath):
-	if not os.path.exists(data_dir):
-		os.makedirs(data_dir)
-	tarfilename = DATA_URL.split('/')[-1]
-	tarfilepath = os.path.join(data_dir, tarfilename)
+		tarfilepath, _ = urllib.request.urlretrieve(DATA_URL, tarfilepath, _progress)
+		print()
+		statinfo = os.stat(tarfilepath)
+		print('Successfully downloaded', tarfilename, statinfo.st_size, 'bytes.')
+		tarfile.open(tarfilepath, 'r:gz').extractall(data_dir)
 
-	tarfilepath, _ = urllib.request.urlretrieve(DATA_URL, tarfilepath, _progress)
-	print()
-	statinfo = os.stat(tarfilepath)
-	print('Successfully downloaded', tarfilename, statinfo.st_size, 'bytes.')
-	tarfile.open(tarfilepath, 'r:gz').extractall(data_dir)
-
-filenames = [os.path.join(filepath, 'data_batch_%d.bin' % i) for i in range(1,6)]
-dataset = tf.data.FixedLengthRecordDataset(filenames,32 * 32 * 3 + 1)
+	filenames = [os.path.join(filepath, 'data_batch_%d.bin' % i) for i in range(1,6)]
+	dataset = tf.data.FixedLengthRecordDataset(filenames,32 * 32 * 3 + 1)
 
 
-dataset = dataset.map(dataset_parser)
+	dataset = dataset.map(dataset_parser)
 
-rand_seed = 5000
-#250k samples for Shai
-dataset = dataset.repeat(5)
+	global rand_seed
+	rand_seed = 5000
+	#250k samples for Shai
+	dataset = dataset.repeat(5)
 
-dataset = dataset.map(train_preprocess_fn)
+	dataset = dataset.map(train_preprocess_fn)
 
-dataset = dataset.map(lambda image, label: (tf.image.per_image_standardization(image), label))
+	dataset = dataset.map(lambda image, label: (tf.image.per_image_standardization(image), label))
 
-iterator = dataset.batch(250000).make_one_shot_iterator()
-data, labels = iterator.get_next()
-#sess = tf.InteractiveSession()
-#data, labels = sess.run([data, labels])
+	iterator = dataset.batch(250000).make_one_shot_iterator()
+	data, labels = iterator.get_next()
+	sess = tf.InteractiveSession()
+	data, labels = sess.run([data, labels])
 
-testfilename = [os.path.join(filepath,'test_batch.bin')]
-testdata = tf.data.FixedLengthRecordDataset(testfilename,32 * 32 * 3 + 1)
-testdata = testdata.map(dataset_parser)
+	testfilename = [os.path.join(filepath,'test_batch.bin')]
+	testdata = tf.data.FixedLengthRecordDataset(testfilename,32 * 32 * 3 + 1)
+	testdata = testdata.map(dataset_parser)
 
-testdata = testdata.map(lambda image, label: (tf.image.per_image_standardization(image), label))
+	testdata = testdata.map(lambda image, label: (tf.image.per_image_standardization(image), label))
 
-iterator = dataset.batch(10000).make_one_shot_iterator()
-test_data, test_labels = iterator.get_next()
-test_data, test_labels = sess.run([test_data, test_labels])
-
+	iterator = dataset.batch(10000).make_one_shot_iterator()
+	test_data, test_labels = iterator.get_next()
+	test_data, test_labels = sess.run([test_data, test_labels])
+	return data, test_data, labels, test_labels

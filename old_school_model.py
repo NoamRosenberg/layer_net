@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from ops import linear, conv2d
+from data import load_data
 from sklearn.metrics import accuracy_score
 import sys
 import argparse
@@ -48,28 +49,31 @@ def model(image, ver=3, reuse=False):
 
 		return h4_dense, layers
 
-def train(layer=9, epochs=2, session=sess):
-	
+def train(layer=9, epochs=2):
+
 	for epoch in range(epochs):
 		print("epoch: ", epoch + 1)
 		for i in range(int(data.shape[0] / batch_size)):
 			batch_data = data[i * batch_size:(i + 1) * batch_size]
 			batch_labels = labels[i * batch_size:(i + 1) * batch_size]
-			_, epoch_loss = session.run([optim[layer], loss], feed_dict={
+			_, epoch_loss = sess.run([optim[layer], loss], feed_dict={
 																images: batch_data,
 																tags: batch_labels,
 																version: layer})
 			if i % 500 == 0:
 				print(epoch_loss)
 		print(epoch_loss)
-		nptest = session.run(predictions, feed_dict={
+		nptest = sess.run(predictions, feed_dict={
 											test_images:test_data,
 											version: 9})
 		pred_test = np.argmax(nptest,axis=1)
 		y_test = np.argmax(test_labels, axis=1)
 		print('accuracy score: ', accuracy_score(y_test,pred_test))	
 
-def main():
+if __name__ == '__main__':
+	FLAGS, unparsed = parser.parse_known_args()
+
+	data, test_data, labels, test_labels = load_data()
 
 	tags = tf.placeholder(tf.int32, [batch_size, classes],name='label')
 	images = tf.placeholder(tf.float32, [batch_size, image_size, image_size, c_dim], name='image')
@@ -91,7 +95,7 @@ def main():
 	optim3 = tf.train.GradientDescentOptimizer(0.01).minimize(loss, var_list=h3_vars)
 	regular_optim = tf.train.GradientDescentOptimizer(0.01).minimize(loss)
 	optim = {0: optim0, 1: optim1, 2: optim2, 3: optim3, 9: regular_optim}
-
+	global sess
 	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
 
@@ -99,12 +103,11 @@ def main():
 		if FLAGS.model_type == 'regular':
 			train(layer=9, epochs=num_epochs)
 		else:
-		train(layer=0, epochs=int(num_epochs/4)+1)
-		train(layer=1, epochs=int(num_epochs/4)+1)
-		train(layer=2, epochs=int(num_epochs/4)+1)
-		train(layer=3, epochs=int(num_epochs/4)+1)
+			train(layer=0, epochs=int(num_epochs/4)+1)
+			train(layer=1, epochs=int(num_epochs/4)+1)
+			train(layer=2, epochs=int(num_epochs/4)+1)
+			train(layer=3, epochs=int(num_epochs/4)+1)
 
-if __name == '__main__':
-	FLAGS, unparsed = parser.parse_known_args()
-	tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+
+
 	
