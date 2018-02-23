@@ -94,8 +94,6 @@ class cifarData:
 
 		iterator = dataset.batch(250000).make_one_shot_iterator()
 		data, labels = iterator.get_next()
-		sess = tf.InteractiveSession()
-		data, labels = sess.run([data, labels])
 
 		testfilename = [os.path.join(filepath,'test_batch.bin')]
 		testdata = tf.data.FixedLengthRecordDataset(testfilename,32 * 32 * 3 + 1)
@@ -105,5 +103,8 @@ class cifarData:
 
 		iterator = dataset.batch(10000).make_one_shot_iterator()
 		test_data, test_labels = iterator.get_next()
-		test_data, test_labels = sess.run([test_data, test_labels])
+		with tf.Session() as session
+			data, labels = session.run([data, labels])
+			test_data, test_labels = session.run([test_data, test_labels])
+
 		return data, test_data, labels, test_labels
