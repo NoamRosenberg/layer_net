@@ -58,11 +58,9 @@ class Graph:
 				if i % 500 == 0:
 					print(epoch_loss)
 			print(epoch_loss)
-			if layer==3:
-				run_version=9
 			nptest = self.sess.run(self.predictions, feed_dict={
 												self.test_images:test_data,
-												self.version: run_version})
+												self.version: layer})
 			pred_test = np.argmax(nptest,axis=1)
 			y_test = np.argmax(test_labels, axis=1)
 			print('accuracy score: ', accuracy_score(y_test,pred_test))
