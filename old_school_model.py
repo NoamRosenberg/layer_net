@@ -1,7 +1,6 @@
 import tensorflow as tf
 import numpy as np
 from ops import linear, conv2d
-from data import cifarData
 from sklearn.metrics import accuracy_score
 
 
@@ -66,10 +65,10 @@ class Graph:
 			y_test = np.argmax(test_labels, axis=1)
 			print('accuracy score: ', accuracy_score(y_test,pred_test))
 
-	def __init__(self, FLAGS):
+	def __init__(self, FLAGS, allData):
 		self.FLAGS = FLAGS
-		cifar = cifarData()
-		self.allData = cifar.load()	
+
+		self.allData = allData	
 
 	def run(self):
 		self.num_epochs = self.FLAGS.epochs
