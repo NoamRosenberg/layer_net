@@ -88,7 +88,7 @@ class Graph:
 
 		nnlogits1, _ = self._model(self.images, self.version)
 		self.loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=self.tags, logits=nnlogits1, scope='cross_entropy'),name='reduce_batch')
-		nnlogits2, _ = self._model(self.test_images, self.version, reuse=True)
+		nnlogits2, neurons2 = self._model(self.test_images, self.version, reuse=True)
 		self.predictions = tf.nn.softmax(nnlogits2)
 
 		t_vars = tf.trainable_variables()
@@ -122,14 +122,19 @@ class Graph:
 
 		self.sess.close()
 
-#	def _writeNeurons(self, neurons, name, save_dir, data, labels):
-#		t_path = save_dir + '/t_' + name + '.csv'
-#		l_path = save_dir + '/l_' + name + '.csv'
-#		with open(t_path, 'wb') as t:
-#			with open(l_path, 'wb') as l:
-#				self.sess.run(neurons, feed_dict={
+'''	def _writeNeurons(self, neurons, name, save_dir, data, labels):
+		if not os.path.exists(save_dir):
+			os.makedirs(save_dir)
+
+		t_path = save_dir + '/t_' + name + '.csv'
+		l_path = save_dir + '/l_' + name + '.csv'
+		with open(t_path, 'wb') as t:
+			with open(l_path, 'wb') as l:
+				self.sess.run(neurons2, feed_dict={
+													self.test_images: test_data,
+													self.version: 9})
 
 
-
+'''
 
 	
