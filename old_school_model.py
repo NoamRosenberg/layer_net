@@ -114,7 +114,7 @@ class Graph:
 			self._train(layer=9, epochs=self.num_epochs)
 		else:
 			print('layer 0 training')			
-			self._train(layer=0, epochs=self.num_epoch)
+			self._train(layer=0, epochs=self.num_epochs)
 			print('layer 1 training')
 			self._train(layer=1, epochs=self.num_epochs)
 			print('layer 3 training')
