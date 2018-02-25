@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from ops import linear, conv2d
 from sklearn.metrics import accuracy_score
+import os
 
 
 
@@ -122,7 +123,7 @@ class Graph:
 
 		self.sess.close()
 
-'''	def _writeNeurons(self, neurons, name, save_dir, data, labels):
+	def _writeNeurons(self, neurons, name, save_dir, data, labels):
 		if not os.path.exists(save_dir):
 			os.makedirs(save_dir)
 
@@ -130,11 +131,12 @@ class Graph:
 		l_path = save_dir + '/l_' + name + '.csv'
 		with open(t_path, 'wb') as t:
 			with open(l_path, 'wb') as l:
-				self.sess.run(neurons2, feed_dict={
-													self.test_images: test_data,
+				units = self.sess.run(neurons2, feed_dict={
+													self.test_images: data,
 													self.version: 9})
+				units.reshape((units.shape[0],-1))
 
 
-'''
+
 
 	
