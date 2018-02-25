@@ -9,10 +9,11 @@ batch_size = 128
 image_size = 32
 c_dim = 3
 classes=10
+save_dir='save'
 
 class Graph:
 
-	def model(self, image, ver=3, reuse=False):
+	def _model(self, image, ver=3, reuse=False):
 		with tf.variable_scope("model") as scope:
 			if reuse:
 				scope.reuse_variables()
@@ -42,12 +43,12 @@ class Graph:
 
 			return h4_dense, layers
 
-	def train(self, layer=9, epochs=2):
+	def _train(self, layer=9, epochs=2):
 
 		data, test_data, labels, test_labels = self.allData
 
 		for epoch in range(epochs):
-			print("epoch: ", epoch + 1)
+			print("layer: ", layer, "epoch: ", epoch + 1)
 			for i in range(int(data.shape[0] / self.FLAGS.batch_size)):
 				batch_data = data[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
 				batch_labels = labels[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
@@ -63,23 +64,31 @@ class Graph:
 												self.version: layer})
 			pred_test = np.argmax(nptest,axis=1)
 			y_test = np.argmax(test_labels, axis=1)
-			print('accuracy score: ', accuracy_score(y_test,pred_test))
+			acc_score = accuracy_score(y_test,pred_test)
+			print('accuracy score: ', acc_score)
+			self.test_accuracy_improvements.append(acc_score)						
+
+	def _write_accuracy_improvements(self,acc):
+		if not os.path.exists(save_dir):
+			os.makedirs(save_dir)
+		np.savetxt(save_dir	+ '/accuracy_improvements.csv', acc, delimiter=',')
 
 	def __init__(self, FLAGS, allData):
-		self.FLAGS = FLAGS
 
+		self.FLAGS = FLAGS
 		self.allData = allData	
 
 	def run(self):
+
 		self.num_epochs = self.FLAGS.epochs
 		self.tags = tf.placeholder(tf.int32, [self.FLAGS.batch_size, classes],name='label')
 		self.images = tf.placeholder(tf.float32, [self.FLAGS.batch_size, image_size, image_size, c_dim], name='image')
 		self.version = tf.placeholder(tf.uint8,name='version')
 		self.test_images = tf.placeholder(tf.float32, [10000, image_size, image_size, c_dim], name='image')
 
-		nnlogits1, _ = self.model(self.images, self.version)
+		nnlogits1, _ = self._model(self.images, self.version)
 		self.loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=self.tags, logits=nnlogits1, scope='cross_entropy'),name='reduce_batch')
-		nnlogits2, _ = self.model(self.test_images, self.version, reuse=True)
+		nnlogits2, _ = self._model(self.test_images, self.version, reuse=True)
 		self.predictions = tf.nn.softmax(nnlogits2)
 
 		t_vars = tf.trainable_variables()
@@ -99,20 +108,26 @@ class Graph:
 		self.sess = tf.Session()
 		self.sess.run(tf.global_variables_initializer())
 
+		self.test_accuracy_improvements = []		
 		if self.FLAGS.model_type == 'regular':
-			self.train(layer=9, epochs=self.num_epochs)
+			self._train(layer=9, epochs=self.num_epochs)
 		else:
 			print('layer 0 training')			
-			self.train(layer=0, epochs=int(self.num_epochs/4)+1)
+			self._train(layer=0, epochs=int(self.num_epochs/4)+1)
 			print('layer 1 training')
-			self.train(layer=1, epochs=int(self.num_epochs/4)+1)
+			self._train(layer=1, epochs=int(self.num_epochs/4)+1)
 			print('layer 2 training')
-			self.train(layer=2, epochs=int(self.num_epochs/4)+1)
-			print('layer 3 training')
-			self.train(layer=3, epochs=int(self.num_epochs/4)+1)
+			self._train(layer=2, epochs=int(self.num_epochs/4)+1)
+		self._write_accuracy_improvements(self.test_accuracy_improvements)
 
 		self.sess.close()
-		
+
+#	def _writeNeurons(self, neurons, name, save_dir, data, labels):
+#		t_path = save_dir + '/t_' + name + '.csv'
+#		l_path = save_dir + '/l_' + name + '.csv'
+#		with open(t_path, 'wb') as t:
+#			with open(l_path, 'wb') as l:
+#				self.sess.run(neurons, feed_dict={
 
 
 
