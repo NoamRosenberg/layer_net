@@ -118,7 +118,7 @@ class Graph:
 			print('layer 1 training')
 			self._train(layer=1, epochs=self.num_epochs)
 			print('layer 3 training')
-			self._train(layer=3, epochs=self.num_epochs))
+			self._train(layer=3, epochs=self.num_epochs)
 		self._write_accuracy_improvements(self.test_accuracy_improvements)
 
 		self.sess.close()
