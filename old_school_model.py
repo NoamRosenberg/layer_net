@@ -114,16 +114,16 @@ class Graph:
 			self._train(layer=9, epochs=self.num_epochs)
 		else:
 			print('layer 0 training')			
-			self._train(layer=0, epochs=int(self.num_epochs/4)+1)
+			self._train(layer=0, epochs=self.num_epoch)
 			print('layer 1 training')
-			self._train(layer=1, epochs=int(self.num_epochs/4)+1)
-			print('layer 2 training')
-			self._train(layer=2, epochs=int(self.num_epochs/4)+1)
+			self._train(layer=1, epochs=self.num_epochs)
+			print('layer 3 training')
+			self._train(layer=3, epochs=self.num_epochs))
 		self._write_accuracy_improvements(self.test_accuracy_improvements)
 
 		self.sess.close()
 
-	def _writeNeurons(self, neurons, name, save_dir, data, labels):
+'''	def _writeNeurons(self, neurons, name, save_dir, data, labels):
 		if not os.path.exists(save_dir):
 			os.makedirs(save_dir)
 
@@ -136,7 +136,7 @@ class Graph:
 													self.version: 9})
 				units.reshape((units.shape[0],-1))
 
-
+'''
 
 
 	
