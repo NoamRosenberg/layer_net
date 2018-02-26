@@ -23,18 +23,24 @@ class Graph:
 			h0_activ =  tf.nn.relu(h0_conv, name='h0_activ')
 			h0_pool = tf.nn.max_pool(h0_activ ,ksize=[1,3,3,1],strides=[1,2,2,1],padding='SAME', name='h0_pool')
 			if ver==0:
-				return linear(tf.reshape(h0_pool, [image.shape.as_list()[0],-1]), 10, 'h0_dense_ret'), [1]
+				h0_dense_ret = linear(tf.reshape(h0_pool, [image.shape.as_list()[0],-1]), 10, 'h0_dense_ret')
+				layers = [h0_conv, h0_activ, h0_pool, h0_dense_ret]
+				return h0_dense_ret, layers
 
 			h1_conv = conv2d(h0_pool,64,name='h1_conv')
 			h1_activ = tf.nn.relu(h1_conv, name='h1_activ')
 			h1_pool = tf.nn.max_pool(h1_activ ,ksize=[1,3,3,1],strides=[1,2,2,1],padding='SAME', name='h1_pool')
 			if ver==1:
-				return linear(tf.reshape(h1_pool, [image.shape.as_list()[0],-1]), 10, 'h1_dense_ret'), [1]
+				h1_dense_ret = linear(tf.reshape(h1_pool, [image.shape.as_list()[0],-1]), 10, 'h1_dense_ret')
+				layers = [h0_conv, h0_activ, h0_pool,h1_conv, h1_activ, h1_pool, h1_dense_ret]
+				return h1_dense_ret, layers
 
 			h2_dense = linear(tf.reshape(h1_pool, [image.shape.as_list()[0],-1]), 384,'h2_dense')
 			h2_activ = tf.nn.relu(h2_dense, name='h2_activ')
 			if ver==2:
-				return linear(h2_activ, 10, 'h2_dense_ret'), [1]
+				h2_dense_ret = linear(h2_activ, 10, 'h2_dense_ret')
+				layers = [h0_conv, h0_activ, h0_pool,h1_conv, h1_activ, h1_pool, h2_dense, h2_activ, h2_dense_ret]
+				return h2_dense_ret, layers
 
 			h3_dense = linear(h2_activ, 192,'h3_dense')
 			h3_activ = tf.nn.relu(h3_dense, name='h3_activ')
@@ -74,6 +80,38 @@ class Graph:
 			os.makedirs(save_dir)
 		np.savetxt(save_dir	+ '/accuracy_improvements.csv', acc, delimiter=',')
 
+	def _writeTestNeurons(self, neurons, ver, data, labels):
+		if not os.path.exists(save_dir):
+			os.makedirs(save_dir)
+		for j in range(len(neurons)):
+			t_path = save_dir + '/t_test' + str(j) + '.csv'
+			l_path = save_dir + '/l_test' + str(j) + '.csv'
+			with open(t_path, 'wb') as t:
+				with open(l_path, 'wb') as l:
+					units = self.sess.run(neurons[j], feed_dict={
+														self.test_images: data,
+														self.version: ver})
+					flat_units = units.reshape((units.shape[0],-1))
+					np.savetxt(t,flat_units, delimiter=',', fmt='%.8e')
+					np.savetxt(l,labels, delimiter=',', fmt='%.8e')
+
+	def _writeTrainNeurons(self, neurons, ver, data, labels):
+		if not os.path.exists(save_dir):
+			os.makedirs(save_dir)
+		for j in range(len(neurons)):
+			t_path = save_dir + '/t_train' + str(j) + '.csv'
+			l_path = save_dir + '/l_train' + str(j) + '.csv'
+			with open(t_path, 'wb') as t:
+				with open(l_path, 'wb') as l:
+					for i in range(int(data.shape[0] / self.FLAGS.batch_size)):
+						batch_data = data[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
+						units = self.sess.run(neurons[j], feed_dict={
+															self.images: batch_data,
+															self.version: ver})
+						flat_units = units.reshape((units.shape[0],-1))
+						np.savetxt(t,flat_units, delimiter=',', fmt='%.8e')
+						np.savetxt(l,labels, delimiter=',', fmt='%.8e')
+
 	def __init__(self, FLAGS, allData):
 
 		self.FLAGS = FLAGS
@@ -87,7 +125,7 @@ class Graph:
 		self.version = tf.placeholder(tf.uint8,name='version')
 		self.test_images = tf.placeholder(tf.float32, [10000, image_size, image_size, c_dim], name='image')
 
-		nnlogits1, _ = self._model(self.images, self.version)
+		nnlogits1, neurons1 = self._model(self.images, self.version)
 		self.loss = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=self.tags, logits=nnlogits1, scope='cross_entropy'),name='reduce_batch')
 		nnlogits2, neurons2 = self._model(self.test_images, self.version, reuse=True)
 		self.predictions = tf.nn.softmax(nnlogits2)
@@ -111,32 +149,24 @@ class Graph:
 
 		self.test_accuracy_improvements = []		
 		if self.FLAGS.model_type == 'regular':
-			self._train(layer=9, epochs=self.num_epochs)
+			lastversion = 9
+			self._train(layer=lastversion, epochs=self.num_epochs)
 		else:
 			print('layer 0 training')			
 			self._train(layer=0, epochs=self.num_epochs)
 			print('layer 1 training')
 			self._train(layer=1, epochs=self.num_epochs)
-			print('layer 2 training')
-			self._train(layer=2, epochs=self.num_epochs)
+			lastversion=2
+			print('layer ',lastversion,' training')
+			self._train(layer=lastversion, epochs=self.num_epochs)
+
 		self._write_accuracy_improvements(self.test_accuracy_improvements)
+		self._writeTrainNeurons(neurons1, lastversion, self.allData[0], self.allData[2])
+		self._writeTestNeurons(neurons2, lastversion, self.allData[1], self.allData[3])
 
 		self.sess.close()
 
-'''	def _writeNeurons(self, neurons, name, save_dir, data, labels):
-		if not os.path.exists(save_dir):
-			os.makedirs(save_dir)
 
-		t_path = save_dir + '/t_' + name + '.csv'
-		l_path = save_dir + '/l_' + name + '.csv'
-		with open(t_path, 'wb') as t:
-			with open(l_path, 'wb') as l:
-				units = self.sess.run(neurons2, feed_dict={
-													self.test_images: data,
-													self.version: 9})
-				units.reshape((units.shape[0],-1))
-
-'''
 
 
 	
