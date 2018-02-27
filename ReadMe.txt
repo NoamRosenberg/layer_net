@@ -5,3 +5,9 @@ Run with python3
 To test run:
 
 python app.py --model_type='regular' --epochs=1 --batch_size=128 --dev=True
+
+To do:
+
+-add seperate learning rates for difference layers
+-add logging and exceptions
+-integrate with waveletforest code
