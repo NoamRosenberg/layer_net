@@ -4,7 +4,7 @@ Run with python3
 
 To test run:
 
-python app.py --model_type='regular' --epochs=1 --batch_size=128 --dev=True
+python app.py --model_type='irregular' --epochs=2 --batch_size=128 --dev=False
 
 To do:
 
