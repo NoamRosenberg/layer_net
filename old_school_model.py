@@ -3,7 +3,9 @@ import numpy as np
 from ops import linear, conv2d
 from sklearn.metrics import accuracy_score
 import os
-
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 batch_size = 128
@@ -52,27 +54,31 @@ class Graph:
 
 	def _train(self, layer=9, epochs=2):
 
-		data, test_data, labels, test_labels = self.allData
+		self.data, self.test_data, self.labels, self.test_labels = self.allData
+		
+		if self.FLAGS.dev == True:
+			self.data = self.data[:128]
+			self.labels = self.labels[:128]
 
 		for epoch in range(epochs):
 			print("layer: ", layer, "epoch: ", epoch + 1)
-			for i in range(int(data.shape[0] / self.FLAGS.batch_size)):
-				batch_data = data[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
-				batch_labels = labels[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
+			for i in range(int(self.data.shape[0] / self.FLAGS.batch_size)):
+				batch_data = self.data[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
+				batch_labels = self.labels[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
 				_, epoch_loss = self.sess.run([self.optim[layer], self.loss], feed_dict={
 																	self.images: batch_data,
 																	self.tags: batch_labels,
 																	self.version: layer})
 				if i % 500 == 0:
-					print(epoch_loss)
-			print(epoch_loss)
+					print('loss: ',epoch_loss)
+
 			nptest = self.sess.run(self.predictions, feed_dict={
-												self.test_images:test_data,
+												self.test_images:self.test_data,
 												self.version: layer})
 			pred_test = np.argmax(nptest,axis=1)
-			y_test = np.argmax(test_labels, axis=1)
+			y_test = np.argmax(self.test_labels, axis=1)
 			acc_score = accuracy_score(y_test,pred_test)
-			print('accuracy score: ', acc_score)
+			print('val accuracy score: ', acc_score)
 			self.test_accuracy_improvements.append(acc_score)						
 
 	def _write_accuracy_improvements(self,acc):
@@ -159,10 +165,11 @@ class Graph:
 			lastversion=2
 			print('layer ',lastversion,' training')
 			self._train(layer=lastversion, epochs=self.num_epochs)
-
+		logger.info('writing accuracy improvements to the save file')
 		self._write_accuracy_improvements(self.test_accuracy_improvements)
-		self._writeTrainNeurons(neurons1, lastversion, self.allData[0], self.allData[2])
-		self._writeTestNeurons(neurons2, lastversion, self.allData[1], self.allData[3])
+		logger.info('Preparing to write train and test neurons to the save file, this may take some time and require lots of disc space')
+		self._writeTrainNeurons(neurons1, lastversion, self.data, self.labels)
+		self._writeTestNeurons(neurons2, lastversion, self.test_data, self.test_labels)
 
 		self.sess.close()
 
