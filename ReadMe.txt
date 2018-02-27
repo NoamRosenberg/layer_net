@@ -2,7 +2,7 @@ This is a simple old school convolutional neural network which if specified can 
 
 Run with python3
 
-To test run:
+To run:
 
 python app.py --model_type='irregular' --epochs=2 --batch_size=128 --dev=False
 
