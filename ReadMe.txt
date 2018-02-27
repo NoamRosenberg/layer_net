@@ -8,6 +8,6 @@ python app.py --model_type='regular' --epochs=1 --batch_size=128 --dev=True
 
 To do:
 
--add seperate learning rates for difference layers
+-allow frozen weights to adjust with varying learning rates
 -add logging and exceptions
 -integrate with waveletforest code
