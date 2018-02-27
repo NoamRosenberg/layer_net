@@ -8,6 +8,8 @@ python app.py --model_type='irregular' --epochs=2 --batch_size=128 --dev=True
 
 To do:
 
+-unhack tensorflow data method use in data.py
 -allow frozen weights to adjust with varying learning rates
 -add logging and exceptions
+-write layers in compressed file to speed things up
 -integrate with waveletforest code
