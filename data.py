@@ -51,6 +51,13 @@ class cifarData:
 		image = tf.image.random_flip_left_right(image, rand_seed)
 		image = tf.image.random_brightness(image, 63, rand_seed)
 		image = tf.image.random_contrast(image,0.2,1.8, rand_seed)
+		image = tf.image.per_image_standardization(image)
+		return image, label
+
+	def _test_preprocess_fn(self, image, label):
+		
+		image = tf.image.resize_image_with_crop_or_pad(image, 24, 24)
+		image = tf.image.per_image_standardization(image)
 		return image, label
 
 	def __init__(self):
@@ -84,16 +91,13 @@ class cifarData:
 
 		dataset = dataset.map(self._train_preprocess_fn)
 
-		dataset = dataset.map(lambda image, label: (tf.image.per_image_standardization(image), label))
-
 		iterator = dataset.batch(250000).make_one_shot_iterator()
 		data, labels = iterator.get_next()
 
 		testfilename = [os.path.join(filepath,'test_batch.bin')]
 		testdata = tf.data.FixedLengthRecordDataset(testfilename,32 * 32 * 3 + 1)
 		testdata = testdata.map(self._dataset_parser)
-
-		testdata = testdata.map(lambda image, label: (tf.image.per_image_standardization(image), label))
+		testdata = testdata.map(self._test_preprocess_fn)
 
 		testiterator = testdata.batch(10000).make_one_shot_iterator()
 		test_data, test_labels = testiterator.get_next()
