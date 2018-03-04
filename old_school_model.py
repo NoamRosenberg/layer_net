@@ -66,12 +66,12 @@ class Graph:
 			for i in range(int(self.data.shape[0] / self.FLAGS.batch_size)):
 				batch_data = self.data[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
 				batch_labels = self.labels[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
-				_, epoch_loss = self.sess.run([self.optim[layer], self.loss], feed_dict={
+				_, epoch_loss, l_rate = self.sess.run([self.optim[layer], self.loss, self.lr], feed_dict={
 																	self.images: batch_data,
 																	self.tags: batch_labels,
 																	self.version: layer})
 				if i % 500 == 0:
-					print('loss: ',epoch_loss)
+					print('loss: ',epoch_loss,'  learning rate: ', l_rate)
 
 			nptest = self.sess.run(self.predictions, feed_dict={
 												self.test_images:self.test_data,
@@ -146,13 +146,13 @@ class Graph:
 		num_batches_per_epoch = self.allData[0].shape[0] / self.FLAGS.batch_size
 		decay_steps = int(num_batches_per_epoch * self.FLAGS.num_epochs_per_decay)
 		global_step = tf.Variable(0, trainable=False, name='global_step')
-		lr = tf.train.exponential_decay(0.1,global_step,decay_steps, self.FLAGS.lr_decay_factor,staircase=True)
+		self.lr = tf.train.exponential_decay(0.1,global_step,decay_steps, self.FLAGS.lr_decay_factor,staircase=True)
 
-		optim0 = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step, var_list=h0_vars)
-		optim1 = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step, var_list=h1_vars)
-		optim2 = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step, var_list=h2_vars)
-		optim3 = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step, var_list=h3_vars)
-		regular_optim = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step)
+		optim0 = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss, global_step=global_step, var_list=h0_vars)
+		optim1 = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss, global_step=global_step, var_list=h1_vars)
+		optim2 = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss, global_step=global_step, var_list=h2_vars)
+		optim3 = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss, global_step=global_step, var_list=h3_vars)
+		regular_optim = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss, global_step=global_step)
 
 		self.optim = {0: optim0, 1: optim1, 2: optim2, 3: optim3, 9: regular_optim}
 
