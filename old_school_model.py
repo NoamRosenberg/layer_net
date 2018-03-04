@@ -13,7 +13,7 @@ image_size = 24
 c_dim = 3
 classes=10
 save_dir='save'
-NUM_EPOCHS_PER_DECAY=350.0
+NUM_EPOCHS_PER_DECAY=100.0
 LEARNING_RATE_DECAY_FACTOR = 0.1
 
 class Graph:
