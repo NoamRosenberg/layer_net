@@ -13,8 +13,7 @@ image_size = 24
 c_dim = 3
 classes=10
 save_dir='save'
-NUM_EPOCHS_PER_DECAY=100.0
-LEARNING_RATE_DECAY_FACTOR = 0.1
+
 
 class Graph:
 
@@ -145,9 +144,9 @@ class Graph:
 		h3_vars= [var for var in t_vars if 'h3' in var.name]
 
 		num_batches_per_epoch = self.allData[0].shape[0] / self.FLAGS.batch_size
-		decay_steps = int(num_batches_per_epoch * NUM_EPOCHS_PER_DECAY)
+		decay_steps = int(num_batches_per_epoch * self.FLAGS.num_epochs_per_decay)
 		global_step = tf.Variable(0, trainable=False, name='global_step')
-		lr = tf.train.exponential_decay(0.1,global_step,decay_steps, LEARNING_RATE_DECAY_FACTOR,staircase=True)
+		lr = tf.train.exponential_decay(0.1,global_step,decay_steps, self.FLAGS.lr_decay_factor,staircase=True)
 
 		optim0 = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step, var_list=h0_vars)
 		optim1 = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step, var_list=h1_vars)

@@ -14,8 +14,11 @@ parser.add_argument('--epochs', type=int, default=20)
 
 parser.add_argument('--batch_size', type=int, default=128)
 
-parser.add_argument('--dev', type=bool, default=False,
-help='set dev to True to test that everythings working, in practice we only train on a single batch of the training data')
+parser.add_argument('--num_epochs_per_decay', type=int, default=50.)
+
+parser.add_argument('--lr_decay_factor', type=int, default=0.1)
+
+parser.add_argument('--dev', type=bool, default=False)
 
 		
 def main():
