@@ -175,8 +175,9 @@ class Graph:
 		logger.info('writing accuracy improvements to the save file')
 		self._write_accuracy_improvements(self.test_accuracy_improvements)
 		logger.info('Preparing to write train and test neurons to the save file, this may take some time and require lots of disc space')
-		self._writeTrainNeurons(neurons1, lastversion, self.data, self.labels)
-		self._writeTestNeurons(neurons2, lastversion, self.test_data, self.test_labels)
+		if self.FLAGS.model_type != 'regular':
+			self._writeTrainNeurons(neurons1, lastversion, self.data, self.labels)
+			self._writeTestNeurons(neurons2, lastversion, self.test_data, self.test_labels)
 
 		self.sess.close()
 
