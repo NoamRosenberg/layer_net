@@ -45,15 +45,12 @@ class cifarData:
 		rand_seed = rand_seed + 1
 		print('Using seed: ' + str(rand_seed))
 
-		# Resize the image to add four extra pixels on each side.
-		image = tf.image.resize_image_with_crop_or_pad(image, 40, 40)
 
-		# Randomly crop a [_HEIGHT, _WIDTH] section of the image.
-		image = tf.random_crop(image, [32, 32, 3], rand_seed)
-
-		# Randomly flip the image horizontally.
+		#image = tf.image.resize_image_with_crop_or_pad(image, 40, 40)
+		image = tf.random_crop(image, [24, 24, 3], rand_seed)
 		image = tf.image.random_flip_left_right(image, rand_seed)
-
+		image = tf.image.random_brightness(image, 63, rand_seed)
+		image = tf.image.random_contrast(image,0.2,1.8, rand_seed)
 		return image, label
 
 	def __init__(self):

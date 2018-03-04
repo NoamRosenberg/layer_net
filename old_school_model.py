@@ -9,10 +9,12 @@ logger = logging.getLogger(__name__)
 
 
 batch_size = 128
-image_size = 32
+image_size = 24
 c_dim = 3
 classes=10
 save_dir='save'
+NUM_EPOCHS_PER_DECAY=350.0
+LEARNING_RATE_DECAY_FACTOR = 0.1
 
 class Graph:
 
@@ -26,7 +28,7 @@ class Graph:
 			h0_pool = tf.nn.max_pool(h0_activ ,ksize=[1,3,3,1],strides=[1,2,2,1],padding='SAME', name='h0_pool')
 			if ver==0:
 				h0_dense_ret = linear(tf.reshape(h0_pool, [image.shape.as_list()[0],-1]), 10, 'h0_dense_ret')
-				layers = [h0_conv, h0_activ, h0_pool, h0_dense_ret]
+				layers = [h0_pool]
 				return h0_dense_ret, layers
 
 			h1_conv = conv2d(h0_pool,64,name='h1_conv')
@@ -34,21 +36,21 @@ class Graph:
 			h1_pool = tf.nn.max_pool(h1_activ ,ksize=[1,3,3,1],strides=[1,2,2,1],padding='SAME', name='h1_pool')
 			if ver==1:
 				h1_dense_ret = linear(tf.reshape(h1_pool, [image.shape.as_list()[0],-1]), 10, 'h1_dense_ret')
-				layers = [h0_conv, h0_activ, h0_pool,h1_conv, h1_activ, h1_pool, h1_dense_ret]
+				layers = [h0_pool, h1_pool]
 				return h1_dense_ret, layers
 
 			h2_dense = linear(tf.reshape(h1_pool, [image.shape.as_list()[0],-1]), 384,'h2_dense')
 			h2_activ = tf.nn.relu(h2_dense, name='h2_activ')
 			if ver==2:
 				h2_dense_ret = linear(h2_activ, 10, 'h2_dense_ret')
-				layers = [h0_conv, h0_activ, h0_pool,h1_conv, h1_activ, h1_pool, h2_dense, h2_activ, h2_dense_ret]
+				layers = [h0_pool, h1_pool, h2_activ]
 				return h2_dense_ret, layers
 
 			h3_dense = linear(h2_activ, 192,'h3_dense')
 			h3_activ = tf.nn.relu(h3_dense, name='h3_activ')
 
 			h4_dense = linear(h3_activ, 10, 'h3_dense_ret')
-			layers = [h0_conv, h0_activ, h0_pool,h1_conv, h1_activ, h1_pool, h2_dense, h2_activ, h3_dense, h3_activ, h4_dense]
+			layers = [h0_pool, h1_pool, h2_activ, h3_activ]
 
 			return h4_dense, layers
 
@@ -142,11 +144,16 @@ class Graph:
 		h2_vars= [var for var in t_vars if 'h2' in var.name]
 		h3_vars= [var for var in t_vars if 'h3' in var.name]
 
-		optim0 = tf.train.GradientDescentOptimizer(0.01).minimize(self.loss, var_list=h0_vars)
-		optim1 = tf.train.GradientDescentOptimizer(0.01).minimize(self.loss, var_list=h1_vars)
-		optim2 = tf.train.GradientDescentOptimizer(0.01).minimize(self.loss, var_list=h2_vars)
-		optim3 = tf.train.GradientDescentOptimizer(0.01).minimize(self.loss, var_list=h3_vars)
-		regular_optim = tf.train.GradientDescentOptimizer(0.01).minimize(self.loss)
+		num_batches_per_epoch = self.allData[0].shape[0] / self.FLAGS.batch_size
+		decay_steps = int(num_batches_per_epoch * NUM_EPOCHS_PER_DECAY)
+		global_step = tf.Variable(0, trainable=False, name='global_step')
+		lr = tf.train.exponential_decay(0.1,global_step,decay_steps, LEARNING_RATE_DECAY_FACTOR,staircase=True)
+
+		optim0 = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step, var_list=h0_vars)
+		optim1 = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step, var_list=h1_vars)
+		optim2 = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step, var_list=h2_vars)
+		optim3 = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step, var_list=h3_vars)
+		regular_optim = tf.train.GradientDescentOptimizer(lr).minimize(self.loss, global_step=global_step)
 
 		self.optim = {0: optim0, 1: optim1, 2: optim2, 3: optim3, 9: regular_optim}
 
