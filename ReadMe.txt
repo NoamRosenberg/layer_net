@@ -4,7 +4,7 @@ Run with python3
 
 To test run:
 
-python app.py --model_type='irregular' --epochs=2 --batch_size=128 --num_epochs_per_decay=50. --lr_decay_factor=0.1 --dev=True
+python app.py --model_type='irregular' --epochs=2 --batch_size=128 --num_epochs_per_decay=350. --lr_decay_factor=0.1 --dev=True
 
 To do:
 

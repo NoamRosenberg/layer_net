@@ -4,6 +4,8 @@ import urllib
 import tarfile
 import tensorflow as tf
 
+#add queues???
+
 class cifarData:
 
 	# Function for progress bar
