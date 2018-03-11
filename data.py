@@ -89,7 +89,7 @@ class cifarData:
 		global rand_seed
 		rand_seed = 5000
 		#250k samples for Shai
-		dataset = dataset.repeat(5)
+		#dataset = dataset.repeat(5)
 
 		dataset = dataset.map(self._train_preprocess_fn)
 

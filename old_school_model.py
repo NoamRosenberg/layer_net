@@ -16,7 +16,7 @@ save_dir='save'
 
 class Graph:
 
-	def _model(self, image, ver=3, reuse=False):
+	def _model(self, image, ver=9, reuse=False):
 		with tf.variable_scope("model") as scope:
 			if reuse:
 				scope.reuse_variables()

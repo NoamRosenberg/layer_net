@@ -14,7 +14,7 @@ parser.add_argument('--epochs', type=int, default=20)
 
 parser.add_argument('--batch_size', type=int, default=128)
 
-parser.add_argument('--num_epochs_per_decay', type=float, default=50.)
+parser.add_argument('--num_epochs_per_decay', type=float, default=350.)
 
 parser.add_argument('--lr_decay_factor', type=float, default=0.1)
 
