@@ -60,7 +60,7 @@ class Graph:
 
 		for epoch in range(epochs):
 			print("layer: ", layer, "epoch: ", epoch + 1)
-			for i in range(int(self.data.shape[0] / self.FLAGS.batch_size) + 1):
+			for i in range(int(self.data.shape[0] / self.FLAGS.batch_size)):
 				batch_data = self.data[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
 				batch_labels = self.labels[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
 				_, epoch_loss, l_rate = self.sess.run([self.optim[layer], self.loss, self.lr], feed_dict={
