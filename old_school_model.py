@@ -163,9 +163,9 @@ class Graph:
 			self._train(layer=lastversion, epochs=self.num_epochs)
 		else:
 			print('layer 0 training')			
-			self._train(layer=0, epochs=int(self.num_epochs/2))
+			self._train(layer=0, epochs=20)
 			print('layer 1 training')
-			self._train(layer=1, epochs=int(self.num_epochs/2))
+			self._train(layer=1, epochs=20)
 			lastversion = 9
 			print('layer ',lastversion,' training')
 			self._train(layer=lastversion, epochs=self.num_epochs)
