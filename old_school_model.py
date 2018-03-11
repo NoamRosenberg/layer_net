@@ -67,7 +67,7 @@ class Graph:
 																	self.images: batch_data,
 																	self.tags: batch_labels,
 																	self.version: layer})
-				if i % 100 == 0:
+				if i % 500 == 0:
 					print('loss: ',epoch_loss,'  learning rate: ', l_rate)
 
 			nptest = self.sess.run(self.predictions, feed_dict={
