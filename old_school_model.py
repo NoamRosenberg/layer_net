@@ -30,7 +30,7 @@ class Graph:
 				layers = [h0_norm]
 				return h0_dense_ret, layers
 
-			h1_conv = conv2d(h0_norm,64,name='h1_conv')
+			h1_conv = conv2d(h0_norm,64, bias_init=0.1, name='h1_conv')
 			h1_activ = tf.nn.relu(h1_conv, name='h1_activ')
 			h1_norm = tf.nn.lrn(h1_activ, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='h1_norm')
 			h1_pool = tf.nn.max_pool(h1_norm ,ksize=[1,3,3,1],strides=[1,2,2,1],padding='SAME', name='h1_pool')
@@ -39,10 +39,10 @@ class Graph:
 				layers = [h0_norm, h1_pool]
 				return h1_dense_ret, layers
 
-			h2_dense = linear(tf.reshape(h1_pool, [image.shape.as_list()[0],-1]), 384,'h2_dense', stddev=0.04, wd=0.004)
+			h2_dense = linear(tf.reshape(h1_pool, [image.shape.as_list()[0],-1]), 384,'h2_dense', stddev=0.04, bias_init=0.1, wd=0.004)
 			h2_activ = tf.nn.relu(h2_dense, name='h2_activ')
 
-			h3_dense = linear(h2_activ, 192,'h3_dense', stddev=0.04, wd=0.004)
+			h3_dense = linear(h2_activ, 192,'h3_dense', stddev=0.04, bias_init=0.1, wd=0.004)
 			h3_activ = tf.nn.relu(h3_dense, name='h3_activ')
 
 			h4_dense = linear(h3_activ, 10, 'h3_dense_ret',stddev=5e-3)
@@ -60,7 +60,7 @@ class Graph:
 
 		for epoch in range(epochs):
 			print("layer: ", layer, "epoch: ", epoch + 1)
-			for i in range(int(self.data.shape[0] / self.FLAGS.batch_size)):
+			for i in range(int(self.data.shape[0] / self.FLAGS.batch_size) + 1):
 				batch_data = self.data[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
 				batch_labels = self.labels[i * self.FLAGS.batch_size:(i + 1) * self.FLAGS.batch_size]
 				_, epoch_loss, l_rate = self.sess.run([self.optim[layer], self.loss, self.lr], feed_dict={
