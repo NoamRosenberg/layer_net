@@ -161,6 +161,12 @@ class Graph:
 		if self.FLAGS.model_type == 'regular':
 			lastversion = 9
 			self._train(layer=lastversion, epochs=self.num_epochs)
+		elif self.FLAGS.model_type == 'first_two':
+			print('layer 0 training')			
+			self._train(layer=0, epochs=20)
+			lastversion = 1
+			print('layer ',lastversion,' training')
+			self._train(layer=lastversion, epochs=20)
 		else:
 			print('layer 0 training')			
 			self._train(layer=0, epochs=20)
