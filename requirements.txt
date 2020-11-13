@@ -5,7 +5,7 @@ scikit-learn==0.19.1
 scipy==1.0.0
 sklearn==0.0
 tensorboard==1.0.0a4
-tensorflow-gpu==1.5.0
+tensorflow-gpu==2.3.1
 tensorflow-tensorboard==1.5.0
 urllib3==1.22
 
