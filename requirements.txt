@@ -7,5 +7,5 @@ sklearn==0.0
 tensorboard==1.0.0a4
 tensorflow-gpu==1.5.0
 tensorflow-tensorboard==1.5.0
-urllib3==1.22
+urllib3==1.26.5
 
